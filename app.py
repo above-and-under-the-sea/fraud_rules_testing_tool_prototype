@@ -59,12 +59,11 @@ METRIC_TIPS = {
     "Value Caught £": "Value Caught: absolute £ amount of fraud intercepted vs total fraudulent amount.",
 }
 
-DEFAULTS = {"txn": 4, "spend": 400, "amount": 500}
-SUGGESTED = {"txn": 8, "spend": 600, "amount": 800, "rf": 0.65}
+DEFAULTS  = {"txn": 4, "spend": 400, "amount": 500}
+SUGGESTED = {"txn": 4, "spend": 400, "amount": 500, "rf": 0.65}
 SUGGESTED_REASONING = [
-    ("Txn count ≥ 8 (24h)", "Catches velocity fraud without flagging heavy legitimate users (avg ~3 txns/day)."),
-    ("Spend ≥ £600 (24h)", "Sits above the 90th percentile of legitimate daily spend in training data."),
-    ("Amount ≥ £800", "Targets high-value single transactions — fraud rate 4× baseline above this threshold."),
+    ("Txn count ≥ 4 (24h)", "Catches velocity fraud without flagging heavy legitimate users (avg ~3 txns/day)."),
+    ("Amount ≥ £500", "Targets high-value single transactions — elevated fraud rate above this threshold."),
     ("Late night ecom ON", "10–100× fraud rate between 0–4am on ecommerce; near-zero false positive cost."),
     ("Logic: OR", "Each rule independently strong enough — AND would miss too many cases."),
 ]
@@ -173,7 +172,7 @@ app.layout = html.Div(style={
 
     # ── Info banner ──
     html.Div([
-        html.Span("Prototype fraud rule exploration tool · built by ", 
+        html.Span("Prototype fraud rule exploration tool · built by ",
                   style={"color": MUTED, "fontSize": "11px"}),
         html.A("Alicja Ulejczyk", href="https://www.linkedin.com/in/alicja-ulejczyk-ba4313146/",
                target="_blank",
@@ -252,7 +251,7 @@ app.layout = html.Div(style={
             rule_block("txn-toggle", "Transaction count (24h)", "txn-slider", "Threshold:",
                        1, 20, 1, DEFAULTS["txn"]),
             rule_block("spend-toggle", "Total spend (24h)", "spend-slider", "Threshold: £",
-                       0, 2000, 50, DEFAULTS["spend"]),
+                       0, 2000, 50, DEFAULTS["spend"], active=False),
 
             html.Hr(style={"borderColor": CARD2, "margin": "14px 0"}),
             section_label("AMOUNT RULE"),
@@ -356,7 +355,8 @@ app.layout = html.Div(style={
 @callback(
     Output("txn-slider", "value"), Output("spend-slider", "value"),
     Output("amount-slider", "value"), Output("rf-slider", "value"),
-    Output("rf-toggle", "value"), Output("late-night-toggle", "value"),
+    Output("rf-toggle", "value"), Output("spend-toggle", "value"),
+    Output("late-night-toggle", "value"),
     Output("logic", "value"), Output("suggest-panel", "style"),
     Input("suggest-btn", "n_clicks"),
     State("suggest-panel", "style"),
@@ -366,7 +366,7 @@ def apply_suggestions(n_clicks, panel_style):
     currently_visible = panel_style.get("display") != "none"
     new_style = {"display": "none"} if currently_visible else {"display": "block"}
     return (SUGGESTED["txn"], SUGGESTED["spend"], SUGGESTED["amount"], SUGGESTED["rf"],
-            ["on"], ["on"], "or", new_style)
+            [], [], ["on"], "or", new_style)
 
 
 @callback(
